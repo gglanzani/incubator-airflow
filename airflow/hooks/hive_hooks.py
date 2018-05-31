@@ -759,8 +759,8 @@ class HiveServer2Hook(BaseHook):
             )
             auth_mechanism = 'KERBEROS'
 
-        from pyhive.hive import connect
-        return connect(
+        from hs2client.hs2client import HS2Client
+        return HS2Client(
             host=db.host,
             port=db.port,
             auth=auth_mechanism,
@@ -769,13 +769,10 @@ class HiveServer2Hook(BaseHook):
             database=schema or db.schema or 'default')
 
     def _get_results(self, hql, schema='default', fetch_size=None):
-        from pyhive.exc import ProgrammingError
         if isinstance(hql, basestring):
             hql = [hql]
         previous_description = None
-        conn = self.get_conn(schema)
-        cur = conn.cursor()
-        try:
+        with self.get_conn(schema) as conn, conn.cursor() as cur:
             cur.arraysize = fetch_size
             for statement in hql:
                 cur.execute(statement)
@@ -799,11 +796,8 @@ class HiveServer2Hook(BaseHook):
                         # may be `SET` or DDL
                         for row in cur:
                             yield row
-                    except ProgrammingError:
+                    except ValueError:
                         self.log.debug("get_results returned no records")
-        finally:
-            cur.close()
-            conn.close()
 
     def get_results(self, hql, schema='default', fetch_size=None):
         results_iter = self._get_results(hql, schema, fetch_size=fetch_size)
