@@ -776,7 +776,7 @@ class HiveServer2Hook(BaseHook):
             hql = [hql]
         previous_description = None
         with self.get_conn(schema) as conn, conn.cursor() as cur:
-            cur.arraysize = fetch_size
+            cur.arraysize = fetch_size or 1000
             for statement in hql:
                 cur.execute(statement)
                 # we only get results of statements that returns
