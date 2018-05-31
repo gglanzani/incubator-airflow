@@ -745,6 +745,9 @@ class HiveServer2Hook(BaseHook):
     def get_conn(self, schema=None):
         db = self.get_connection(self.hiveserver2_conn_id)
         auth_mechanism = db.extra_dejson.get('authMechanism', 'NONE')
+        if auth_mechanism == 'NONE' and db.login is None:
+            # we need to give a username
+            username = 'airflow'
         kerberos_service_name = None
         if configuration.conf.get('core', 'security') == 'kerberos':
             auth_mechanism = db.extra_dejson.get('authMechanism', 'KERBEROS')
@@ -765,7 +768,7 @@ class HiveServer2Hook(BaseHook):
             port=db.port,
             auth=auth_mechanism,
             kerberos_service_name=kerberos_service_name,
-            username=db.login,
+            username=db.login or username,
             database=schema or db.schema or 'default')
 
     def _get_results(self, hql, schema='default', fetch_size=None):
