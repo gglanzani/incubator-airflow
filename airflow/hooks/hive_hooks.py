@@ -777,8 +777,8 @@ class HiveServer2Hook(BaseHook):
         if isinstance(hql, basestring):
             hql = [hql]
         previous_description = None
-        with contextlib.closing(self.get_conn(schema)) as  conn, \
-            contextlib.closing(conn.cursor()) as cur:
+        with contextlib.closing(self.get_conn(schema)) as conn, \
+                contextlib.closing(conn.cursor()) as cur:
             cur.arraysize = fetch_size or 1000
             for statement in hql:
                 cur.execute(statement)
@@ -802,7 +802,7 @@ class HiveServer2Hook(BaseHook):
                         # may be `SET` or DDL
                         for row in cur:
                             yield row
-                    except ValueError:
+                    except ProgrammingError:
                         self.log.debug("get_results returned no records")
 
     def get_results(self, hql, schema='default', fetch_size=None):
