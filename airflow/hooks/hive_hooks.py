@@ -19,6 +19,7 @@
 
 from __future__ import print_function, unicode_literals
 
+import contextlib
 import os
 
 from six.moves import zip
@@ -762,8 +763,8 @@ class HiveServer2Hook(BaseHook):
             )
             auth_mechanism = 'KERBEROS'
 
-        from hs2client.hs2client import HS2Client
-        return HS2Client(
+        from pyhive.hive import connect
+        return connect(
             host=db.host,
             port=db.port,
             auth=auth_mechanism,
@@ -772,10 +773,12 @@ class HiveServer2Hook(BaseHook):
             database=schema or db.schema or 'default')
 
     def _get_results(self, hql, schema='default', fetch_size=None):
+        from pyhive.exc import ProgrammingError
         if isinstance(hql, basestring):
             hql = [hql]
         previous_description = None
-        with self.get_conn(schema) as conn, conn.cursor() as cur:
+        with contextlib.closing(self.get_conn(schema)) as  conn, \
+            contextlib.closing(conn.cursor()) as cur:
             cur.arraysize = fetch_size or 1000
             for statement in hql:
                 cur.execute(statement)
