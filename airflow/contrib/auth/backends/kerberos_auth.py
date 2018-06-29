@@ -58,17 +58,17 @@ class KerberosUser(models.User, LoggingMixin):
             utils.get_fqdn()
         )
         realm = configuration.conf.get("kerberos", "default_realm")
-        user_principal = utils.principal_from_username(username)
 
         try:
             # this is pykerberos specific, verify = True is needed to prevent KDC spoofing
-            if not kerberos.checkPassword(user_principal,
+            if not kerberos.checkPassword(username,
                                           password,
                                           service_principal, realm, True):
                 raise AuthenticationError()
         except kerberos.KrbError as e:
             logging.error(
-                'Password validation for principal %s failed %s', user_principal, e)
+                'Password validation for user '
+                '%s in realm %s failed %s', username, realm, e)
             raise AuthenticationError(e)
 
         return
